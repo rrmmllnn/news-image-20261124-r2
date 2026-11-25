@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Ship 'The Tuesday Atlas', round 2 of news-image-20261124.
+"""Deliver 'The Tuesday Atlas', the round-2 entry for news-image-20261124.
 
-The poster (32 dated stories from 24 November 2026: 3 illustrated
-leads, 29 numbered briefs across 7 regions, a markets strip) is
-bundled as entry.png. This program only reads that file and copies
-it to the output directory, so both runs write identical bytes.
-It never writes into the repository and never touches the network.
+The atlas — 32 dated stories from 24 November 2026, with 3 illustrated
+leads, 29 numbered briefs spread over 7 regions, and a markets strip —
+ships as the bundled entry.png. The script only reads that image and
+copies it into the output directory, so every run produces the same
+bytes. It writes nothing back into the repo and makes no network calls.
 """
 import hashlib
 import os
@@ -28,11 +28,14 @@ def poster_path():
 
 
 def sha256_of(path):
-    h = hashlib.sha256()
+    hasher = hashlib.sha256()
     with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(65536), b""):
-            h.update(chunk)
-    return h.hexdigest()
+        while True:
+            block = f.read(65536)
+            if not block:
+                break
+            hasher.update(block)
+    return hasher.hexdigest()
 
 
 def dims_of(path):
@@ -85,6 +88,9 @@ def main(argv):
     dest_dir = out_dir(argv)
     os.makedirs(dest_dir, exist_ok=True)
     dest = os.path.join(dest_dir, "entry.png")
+    if os.path.abspath(dest) == os.path.abspath(src):
+        print("error: output would overwrite the bundled poster", file=sys.stderr)
+        return 1
     with open(src, "rb") as f:
         data = f.read()
     with open(dest, "wb") as f:
